@@ -37,6 +37,7 @@ func NewServerHandler(configuration *Configuration, port int) *ServerHandler {
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		},
+		executor: NewExecutor(),
 	}
 
 	serverHandler := &ServerHandler{

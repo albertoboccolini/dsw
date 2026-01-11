@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"syscall"
 )
@@ -12,8 +13,24 @@ type Daemon struct {
 	configuration *Configuration
 }
 
-func NewDaemon() *Daemon {
-	return &Daemon{}
+func NewDaemon(configuration *Configuration) *Daemon {
+	return &Daemon{
+		configuration: configuration,
+	}
+}
+
+func (daemon *Daemon) getLogPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	logDir := filepath.Join(home, ".dsw")
+	if err := os.MkdirAll(logDir, 0700); err != nil {
+		return "", fmt.Errorf("failed to create log directory: %w", err)
+	}
+
+	return filepath.Join(logDir, "dsw.log"), nil
 }
 
 func (daemon *Daemon) StartDaemon(port int) error {
@@ -31,10 +48,24 @@ func (daemon *Daemon) StartDaemon(port int) error {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
+	logPath, err := daemon.getLogPath()
+	if err != nil {
+		return fmt.Errorf("failed to get log path: %w", err)
+	}
+
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to open log file: %w", err)
+	}
+	defer logFile.Close()
+
 	command := exec.Command(executable, "serve", "-p", strconv.Itoa(port))
-	command.Stdout = nil
-	command.Stderr = nil
+	command.Stdout = logFile
+	command.Stderr = logFile
 	command.Stdin = nil
+	command.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
 
 	if err := command.Start(); err != nil {
 		return fmt.Errorf("failed to start daemon: %w", err)
@@ -49,6 +80,7 @@ func (daemon *Daemon) StartDaemon(port int) error {
 	command.Process.Release()
 
 	fmt.Printf("Daemon started with PID %d on port %d\n", pid, port)
+	fmt.Printf("Logs: %s\n", logPath)
 	return nil
 }
 

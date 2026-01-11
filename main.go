@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
+	"github.com/albertoboccolini/dsw/models"
 	"github.com/albertoboccolini/dsw/services"
 )
 
@@ -14,6 +16,9 @@ func printUsage() {
 	fmt.Println("  dsw create -f <file.yaml>       Create actions from YAML file")
 	fmt.Println("  dsw serve [-p 8080] [-d]        Start HTTP API server")
 	fmt.Println("  dsw stop                        Stop daemon server")
+	fmt.Println("  dsw boot enable [-p 8080]       Enable boot service")
+	fmt.Println("  dsw boot disable                Disable boot service")
+	fmt.Println("  dsw version                     Show version")
 }
 
 func main() {
@@ -25,6 +30,15 @@ func main() {
 	command := os.Args[1]
 	configuration := services.NewConfiguration()
 	err := configuration.Load()
+	var version bool
+	flag.BoolVar(&version, "version", false, "Show version information")
+	flag.BoolVar(&version, "v", false, "Show version information (shorthand)")
+	flag.Parse()
+
+	if version {
+		fmt.Printf("v%s\n", models.VERSION)
+		return
+	}
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to load configuration: %v\n", err)
@@ -32,7 +46,7 @@ func main() {
 	}
 
 	validator := services.NewValidator()
-	daemon := services.NewDaemon()
+	daemon := services.NewDaemon(configuration)
 	commandHandler := services.NewCommandHandler(configuration, validator, daemon)
 
 	switch command {
@@ -42,6 +56,10 @@ func main() {
 		commandHandler.Serve()
 	case "stop":
 		commandHandler.ServerStop()
+	case "boot":
+		commandHandler.HandleBoot()
+	case "version":
+		fmt.Printf("v%s\n", models.VERSION)
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		printUsage()

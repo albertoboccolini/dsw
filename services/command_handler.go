@@ -140,3 +140,35 @@ func (commandHandler *CommandHandler) ServerStop() {
 		os.Exit(1)
 	}
 }
+
+func (commandHandler *CommandHandler) HandleBoot() {
+	if len(os.Args) < 3 {
+		fmt.Fprintln(os.Stderr, "Error: boot subcommand required (enable|disable)")
+		os.Exit(1)
+	}
+
+	bootCommand := os.Args[2]
+	bootManager := NewBootManager(commandHandler.configuration)
+
+	switch bootCommand {
+	case "enable":
+		bootFlags := flag.NewFlagSet("boot enable", flag.ExitOnError)
+		port := bootFlags.Int("p", 8080, "Port to listen on")
+		bootFlags.Parse(os.Args[3:])
+
+		if err := bootManager.EnableBootService(*port); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+	case "disable":
+		if err := bootManager.DisableBootService(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown boot command: %s\n", bootCommand)
+		os.Exit(1)
+	}
+}
