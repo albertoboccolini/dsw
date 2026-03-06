@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/albertoboccolini/dsw/models"
 	"github.com/spf13/viper"
@@ -14,13 +15,20 @@ type CommandHandler struct {
 	configuration *Configuration
 	validator     *Validator
 	daemon        *Daemon
+	utils         *Utils
 }
 
-func NewCommandHandler(configuration *Configuration, validator *Validator, daemon *Daemon) *CommandHandler {
+func NewCommandHandler(
+	configuration *Configuration,
+	validator *Validator,
+	daemon *Daemon,
+	utils *Utils,
+) *CommandHandler {
 	return &CommandHandler{
 		configuration: configuration,
 		validator:     validator,
 		daemon:        daemon,
+		utils:         utils,
 	}
 }
 
@@ -78,6 +86,7 @@ func (commandHandler *CommandHandler) batchCreate(filePath string) {
 			fmt.Fprintf(os.Stderr, "Warning: failed to add action '%s': %v\n", name, err)
 			continue
 		}
+
 		addedCount++
 	}
 
@@ -92,7 +101,12 @@ func (commandHandler *CommandHandler) batchCreate(filePath string) {
 func (commandHandler *CommandHandler) Create() {
 	createFlags := flag.NewFlagSet("create", flag.ExitOnError)
 	configFile := createFlags.String("f", "", "YAML file with actions to add")
-	createFlags.Parse(os.Args[2:])
+	err := createFlags.Parse(os.Args[2:])
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
+		os.Exit(1)
+	}
 
 	if *configFile != "" {
 		commandHandler.batchCreate(*configFile)
@@ -110,16 +124,61 @@ func (commandHandler *CommandHandler) Create() {
 	commandHandler.singleCreate(actionName, commandString)
 }
 
+func (commandHandler *CommandHandler) ListActions() {
+	if len(commandHandler.configuration.Actions) == 0 {
+		fmt.Println("No actions configured")
+		return
+	}
+
+	for name, action := range commandHandler.configuration.Actions {
+		fmt.Printf("%s: %s", name, action.Command)
+		if len(action.Args) > 0 {
+			fmt.Printf(" %v", action.Args)
+		}
+
+		fmt.Println()
+	}
+}
+
+func (commandHandler *CommandHandler) Run() {
+	if len(os.Args) < 3 {
+		fmt.Fprintln(os.Stderr, "Usage: dsw run <action-name>")
+		os.Exit(1)
+	}
+
+	actionName := os.Args[2]
+	action, exists := commandHandler.configuration.GetAction(actionName)
+	if !exists {
+		fmt.Fprintf(os.Stderr, "Error: action '%s' not found\n", actionName)
+		os.Exit(1)
+	}
+
+	executor := NewExecutor()
+	result := executor.Execute(action)
+
+	fmt.Printf("%s", result.Output)
+
+	if !result.Success {
+		os.Exit(1)
+	}
+}
+
 func (commandHandler *CommandHandler) Serve() {
 	serveFlags := flag.NewFlagSet("serve", flag.ExitOnError)
-	port := serveFlags.Int("p", 8080, "Port to listen on")
+	port := serveFlags.Int("p", models.DEFAULT_PORT, "Port to listen on")
 	daemonMode := serveFlags.Bool("d", false, "Run in daemon mode")
-	serveFlags.Parse(os.Args[2:])
+	err := serveFlags.Parse(os.Args[2:])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
+		os.Exit(1)
+	}
+
 	if *daemonMode {
 		if err := commandHandler.daemon.StartDaemon(*port); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
+
 		return
 	}
 
@@ -141,6 +200,35 @@ func (commandHandler *CommandHandler) ServerStop() {
 	}
 }
 
+func (commandHandler *CommandHandler) Status() {
+	bootManager := NewBootManager(commandHandler.configuration)
+
+	status := "not running"
+	pid := "N/A"
+	port := "N/A"
+
+	if commandHandler.daemon.IsRunning() {
+		status = "running"
+		pidPath, _ := commandHandler.configuration.GetPIDPath()
+		pidData, err := os.ReadFile(pidPath)
+		if err == nil {
+			pid = strings.TrimSpace(string(pidData))
+			port = commandHandler.utils.ExtractPortFromCmdline(pid)
+		}
+	}
+
+	fmt.Printf("Status: %s\n", status)
+	bootEnabled := bootManager.IsBootServiceEnabled()
+	bootStatus := "disabled"
+	if bootEnabled {
+		bootStatus = "enabled"
+	}
+
+	fmt.Printf("Boot: %s\n", bootStatus)
+	fmt.Printf("Port: %s\n", port)
+	fmt.Printf("PID: %s\n", pid)
+}
+
 func (commandHandler *CommandHandler) HandleBoot() {
 	if len(os.Args) < 3 {
 		fmt.Fprintln(os.Stderr, "Error: boot subcommand required (enable|disable)")
@@ -153,20 +241,21 @@ func (commandHandler *CommandHandler) HandleBoot() {
 	switch bootCommand {
 	case "enable":
 		bootFlags := flag.NewFlagSet("boot enable", flag.ExitOnError)
-		port := bootFlags.Int("p", 8080, "Port to listen on")
-		bootFlags.Parse(os.Args[3:])
+		port := bootFlags.Int("p", models.DEFAULT_PORT, "Port to listen on")
+		if err := bootFlags.Parse(os.Args[3:]); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
+			os.Exit(1)
+		}
 
 		if err := bootManager.EnableBootService(*port); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-
 	case "disable":
 		if err := bootManager.DisableBootService(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown boot command: %s\n", bootCommand)
 		os.Exit(1)

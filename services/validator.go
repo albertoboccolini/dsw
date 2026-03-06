@@ -88,6 +88,7 @@ func (validator *Validator) splitCommand(input string) ([]string, error) {
 			} else {
 				currentToken.WriteRune(character)
 			}
+
 			continue
 		}
 

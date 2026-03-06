@@ -29,7 +29,7 @@ func (configuration *Configuration) GetConfigPath() (string, error) {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	configDir := filepath.Join(homeDir, ".dsw")
+	configDir := filepath.Join(homeDir, models.CONFIGURATION_FOLDER)
 	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create configuration directory: %w", err)
 	}
@@ -43,7 +43,7 @@ func (configuration *Configuration) GetPIDPath() (string, error) {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	return filepath.Join(homeDir, ".dsw", "dsw.pid"), nil
+	return filepath.Join(homeDir, models.CONFIGURATION_FOLDER, "dsw.pid"), nil
 }
 
 func (configuration *Configuration) Load() error {
@@ -96,7 +96,10 @@ func (configuration *Configuration) Save() error {
 	}
 
 	if err := os.Rename(tempPath, configPath); err != nil {
-		os.Remove(tempPath)
+		if err := os.Remove(tempPath); err != nil {
+			return fmt.Errorf("failed to remove temporary configuration file: %v", err)
+		}
+
 		return fmt.Errorf("failed to rename configuration: %w", err)
 	}
 
@@ -128,5 +131,6 @@ func isValidActionName(name string) bool {
 	if len(name) == 0 {
 		return false
 	}
+
 	return actionNamePattern.MatchString(name)
 }

@@ -102,6 +102,7 @@ func (serverHandler *ServerHandler) handleExecuteAction(responseWriter http.Resp
 	if !result.Success {
 		statusCode = http.StatusInternalServerError
 	}
+
 	responseWriter.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(responseWriter).Encode(result); err != nil {
@@ -112,7 +113,9 @@ func (serverHandler *ServerHandler) handleExecuteAction(responseWriter http.Resp
 func (server *Server) respondError(responseWriter http.ResponseWriter, message string, statusCode int) {
 	responseWriter.Header().Set("Content-Type", "application/json")
 	responseWriter.WriteHeader(statusCode)
-	json.NewEncoder(responseWriter).Encode(ErrorResponse{Error: message})
+	if err := json.NewEncoder(responseWriter).Encode(ErrorResponse{Error: message}); err != nil {
+		slog.Error("failed to encode error response", "error", err)
+	}
 }
 
 func (server *Server) Start() error {

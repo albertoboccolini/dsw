@@ -23,18 +23,18 @@ jobs:
         run: |
           go mod download
           go mod verify
-          
-      - name: Verify formatting
-        run: |
-          gofmt_output=$(gofmt -l .)
-          if [ -n "$gofmt_output" ]; then
-            echo "Files not properly formatted:"
-            echo "$gofmt_output"
-            exit 1
-          fi
 
-      - name: Run go vet
-        run: go vet ./...
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
 
       - name: Build binary
         run: go build -o build/app .
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --snapshot --clean
