@@ -14,6 +14,7 @@ func printUsage() {
 	fmt.Println("\nUsage:")
 	fmt.Println("  dsw create <name> <command>     Create a single action")
 	fmt.Println("  dsw create -f <file.yaml>       Create actions from YAML file")
+	fmt.Println("  dsw ls                          List all available actions")
 	fmt.Println("  dsw serve [-p 8080] [-d]        Start HTTP API server")
 	fmt.Println("  dsw stop                        Stop daemon server")
 	fmt.Println("  dsw boot enable [-p 8080]       Enable boot service")
@@ -52,6 +53,8 @@ func main() {
 	switch command {
 	case "create":
 		commandHandler.Create()
+	case "ls":
+		commandHandler.ListActions()
 	case "serve":
 		commandHandler.Serve()
 	case "stop":

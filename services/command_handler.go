@@ -116,6 +116,22 @@ func (commandHandler *CommandHandler) Create() {
 	commandHandler.singleCreate(actionName, commandString)
 }
 
+func (commandHandler *CommandHandler) ListActions() {
+	if len(commandHandler.configuration.Actions) == 0 {
+		fmt.Println("No actions configured")
+		return
+	}
+
+	for name, action := range commandHandler.configuration.Actions {
+		fmt.Printf("%s: %s", name, action.Command)
+		if len(action.Args) > 0 {
+			fmt.Printf(" %v", action.Args)
+		}
+
+		fmt.Println()
+	}
+}
+
 func (commandHandler *CommandHandler) Serve() {
 	serveFlags := flag.NewFlagSet("serve", flag.ExitOnError)
 	port := serveFlags.Int("p", models.DEFAULT_PORT, "Port to listen on")
