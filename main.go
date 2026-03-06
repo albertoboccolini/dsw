@@ -17,6 +17,7 @@ func printUsage() {
 	fmt.Println("  dsw ls                          List all available actions")
 	fmt.Println("  dsw serve [-p 8080] [-d]        Start HTTP API server")
 	fmt.Println("  dsw stop                        Stop daemon server")
+	fmt.Println("  dsw status                      Show daemon status")
 	fmt.Println("  dsw boot enable [-p 8080]       Enable boot service")
 	fmt.Println("  dsw boot disable                Disable boot service")
 	fmt.Println("  dsw version                     Show version")
@@ -48,7 +49,8 @@ func main() {
 
 	validator := services.NewValidator()
 	daemon := services.NewDaemon(configuration)
-	commandHandler := services.NewCommandHandler(configuration, validator, daemon)
+	utils := services.NewUtils()
+	commandHandler := services.NewCommandHandler(configuration, validator, daemon, utils)
 
 	switch command {
 	case "create":
@@ -59,6 +61,8 @@ func main() {
 		commandHandler.Serve()
 	case "stop":
 		commandHandler.ServerStop()
+	case "status":
+		commandHandler.Status()
 	case "boot":
 		commandHandler.HandleBoot()
 	case "version":

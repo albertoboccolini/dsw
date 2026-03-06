@@ -22,7 +22,7 @@ This project requires **Go version 1.25.4 or higher**. Make sure you have a comp
     dsw serve -d
 
     # Actions are defined in ~/.config/dsw/configuration.yaml and can be executed through the local HTTP API calls.
-    curl -X POST http://localhost:8080/execute/chromium
+    curl -X POST http://localhost:4242/execute/chromium
     ```
 
 
@@ -30,9 +30,9 @@ This project requires **Go version 1.25.4 or higher**. Make sure you have a comp
 
 - `dsw create <name> <command>`: Create a single action
 - `dsw create -f <file.yaml>`: Create actions from YAML file
-- `dsw serve [-p 8080] [-d]`: Start HTTP API server (use -d for daemon mode)
+- `dsw serve [-p 4242] [-d]`: Start HTTP API server (use -d for daemon mode)
 - `dsw stop`: Stop daemon server
-- `dsw boot enable [-p 8080]`: Enable automatic startup at boot (systemd user service)
+- `dsw boot enable [-p 4242]`: Enable automatic startup at boot (systemd user service)
 - `dsw boot disable`: Disable automatic startup
 - `dsw version`: Show version
 

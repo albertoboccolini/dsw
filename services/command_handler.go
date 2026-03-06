@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/albertoboccolini/dsw/models"
 	"github.com/spf13/viper"
@@ -14,13 +15,20 @@ type CommandHandler struct {
 	configuration *Configuration
 	validator     *Validator
 	daemon        *Daemon
+	utils         *Utils
 }
 
-func NewCommandHandler(configuration *Configuration, validator *Validator, daemon *Daemon) *CommandHandler {
+func NewCommandHandler(
+	configuration *Configuration,
+	validator *Validator,
+	daemon *Daemon,
+	utils *Utils,
+) *CommandHandler {
 	return &CommandHandler{
 		configuration: configuration,
 		validator:     validator,
 		daemon:        daemon,
+		utils:         utils,
 	}
 }
 
@@ -167,6 +175,35 @@ func (commandHandler *CommandHandler) ServerStop() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func (commandHandler *CommandHandler) Status() {
+	bootManager := NewBootManager(commandHandler.configuration)
+
+	status := "not running"
+	pid := "N/A"
+	port := "N/A"
+
+	if commandHandler.daemon.IsRunning() {
+		status = "running"
+		pidPath, _ := commandHandler.configuration.GetPIDPath()
+		pidData, err := os.ReadFile(pidPath)
+		if err == nil {
+			pid = strings.TrimSpace(string(pidData))
+			port = commandHandler.utils.ExtractPortFromCmdline(pid)
+		}
+	}
+
+	fmt.Printf("Status: %s\n", status)
+	bootEnabled := bootManager.IsBootServiceEnabled()
+	bootStatus := "disabled"
+	if bootEnabled {
+		bootStatus = "enabled"
+	}
+
+	fmt.Printf("Boot: %s\n", bootStatus)
+	fmt.Printf("Port: %s\n", port)
+	fmt.Printf("PID: %s\n", pid)
 }
 
 func (commandHandler *CommandHandler) HandleBoot() {
