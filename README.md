@@ -21,7 +21,7 @@ This project requires **Go version 1.25.4 or higher**. Make sure you have a comp
     # Start the HTTP server for local API (daemon mode)
     dsw serve -d
 
-    # Actions are defined in ~/.dsw/configuration.yaml and can be executed through the local HTTP API calls.
+    # Actions are defined in ~/.config/dsw/configuration.yaml and can be executed through the local HTTP API calls.
     curl -X POST http://localhost:8080/execute/chromium
     ```
 

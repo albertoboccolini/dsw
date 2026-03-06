@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+
+	"github.com/albertoboccolini/dsw/models"
 )
 
 type Daemon struct {
@@ -25,7 +27,7 @@ func (daemon *Daemon) getLogPath() (string, error) {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	logDir := filepath.Join(home, ".dsw")
+	logDir := filepath.Join(home, models.CONFIGURATION_FOLDER)
 	if err := os.MkdirAll(logDir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create log directory: %w", err)
 	}
@@ -57,7 +59,12 @@ func (daemon *Daemon) StartDaemon(port int) error {
 	if err != nil {
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
-	defer logFile.Close()
+
+	defer func() {
+		if closeErr := logFile.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "failed to close log file: %v\n", closeErr)
+		}
+	}()
 
 	command := exec.Command(executable, "serve", "-p", strconv.Itoa(port))
 	command.Stdout = logFile
@@ -73,11 +80,16 @@ func (daemon *Daemon) StartDaemon(port int) error {
 
 	pid := command.Process.Pid
 	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(pid)), 0600); err != nil {
-		command.Process.Kill()
+		if err := command.Process.Kill(); err != nil {
+			return fmt.Errorf("failed to kill process after PID file write failure: %v", err)
+		}
+
 		return fmt.Errorf("failed to write PID file: %w", err)
 	}
 
-	command.Process.Release()
+	if err := command.Process.Release(); err != nil {
+		return fmt.Errorf("failed to release process: %v", err)
+	}
 
 	fmt.Printf("Daemon started with PID %d on port %d\n", pid, port)
 	fmt.Printf("Logs: %s\n", logPath)
@@ -106,16 +118,20 @@ func (daemon *Daemon) StopDaemon() error {
 
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		os.Remove(pidPath)
+		err = os.Remove(pidPath)
 		return fmt.Errorf("process not found: %w", err)
 	}
 
 	if err := process.Signal(syscall.SIGTERM); err != nil {
-		os.Remove(pidPath)
+		err = os.Remove(pidPath)
 		return fmt.Errorf("failed to stop process: %w", err)
 	}
 
-	os.Remove(pidPath)
+	err = os.Remove(pidPath)
+	if err != nil {
+		return fmt.Errorf("failed to remove PID file: %w", err)
+	}
+
 	fmt.Printf("Daemon stopped (PID %d)\n", pid)
 	return nil
 }

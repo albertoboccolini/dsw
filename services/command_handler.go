@@ -78,6 +78,7 @@ func (commandHandler *CommandHandler) batchCreate(filePath string) {
 			fmt.Fprintf(os.Stderr, "Warning: failed to add action '%s': %v\n", name, err)
 			continue
 		}
+
 		addedCount++
 	}
 
@@ -92,7 +93,12 @@ func (commandHandler *CommandHandler) batchCreate(filePath string) {
 func (commandHandler *CommandHandler) Create() {
 	createFlags := flag.NewFlagSet("create", flag.ExitOnError)
 	configFile := createFlags.String("f", "", "YAML file with actions to add")
-	createFlags.Parse(os.Args[2:])
+	err := createFlags.Parse(os.Args[2:])
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
+		os.Exit(1)
+	}
 
 	if *configFile != "" {
 		commandHandler.batchCreate(*configFile)
@@ -112,14 +118,20 @@ func (commandHandler *CommandHandler) Create() {
 
 func (commandHandler *CommandHandler) Serve() {
 	serveFlags := flag.NewFlagSet("serve", flag.ExitOnError)
-	port := serveFlags.Int("p", 8080, "Port to listen on")
+	port := serveFlags.Int("p", models.DEFAULT_PORT, "Port to listen on")
 	daemonMode := serveFlags.Bool("d", false, "Run in daemon mode")
-	serveFlags.Parse(os.Args[2:])
+	err := serveFlags.Parse(os.Args[2:])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
+		os.Exit(1)
+	}
+
 	if *daemonMode {
 		if err := commandHandler.daemon.StartDaemon(*port); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
+
 		return
 	}
 
@@ -153,20 +165,21 @@ func (commandHandler *CommandHandler) HandleBoot() {
 	switch bootCommand {
 	case "enable":
 		bootFlags := flag.NewFlagSet("boot enable", flag.ExitOnError)
-		port := bootFlags.Int("p", 8080, "Port to listen on")
-		bootFlags.Parse(os.Args[3:])
+		port := bootFlags.Int("p", models.DEFAULT_PORT, "Port to listen on")
+		if err := bootFlags.Parse(os.Args[3:]); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
+			os.Exit(1)
+		}
 
 		if err := bootManager.EnableBootService(*port); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-
 	case "disable":
 		if err := bootManager.DisableBootService(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown boot command: %s\n", bootCommand)
 		os.Exit(1)
