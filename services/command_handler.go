@@ -140,6 +140,29 @@ func (commandHandler *CommandHandler) ListActions() {
 	}
 }
 
+func (commandHandler *CommandHandler) Run() {
+	if len(os.Args) < 3 {
+		fmt.Fprintln(os.Stderr, "Usage: dsw run <action-name>")
+		os.Exit(1)
+	}
+
+	actionName := os.Args[2]
+	action, exists := commandHandler.configuration.GetAction(actionName)
+	if !exists {
+		fmt.Fprintf(os.Stderr, "Error: action '%s' not found\n", actionName)
+		os.Exit(1)
+	}
+
+	executor := NewExecutor()
+	result := executor.Execute(action)
+
+	fmt.Printf("%s", result.Output)
+
+	if !result.Success {
+		os.Exit(1)
+	}
+}
+
 func (commandHandler *CommandHandler) Serve() {
 	serveFlags := flag.NewFlagSet("serve", flag.ExitOnError)
 	port := serveFlags.Int("p", models.DEFAULT_PORT, "Port to listen on")
