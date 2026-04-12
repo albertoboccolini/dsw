@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/albertoboccolini/dsw/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/overthinkinglabs/dsw/models"
 )
 
 type ServerHandler struct {

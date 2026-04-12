@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/albertoboccolini/dsw/models"
+	"github.com/overthinkinglabs/dsw/models"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
