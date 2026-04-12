@@ -1,4 +1,4 @@
-module github.com/albertoboccolini/dsw
+module github.com/overthinkinglabs/dsw
 
 go 1.25.5
 

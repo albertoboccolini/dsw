@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/albertoboccolini/dsw/models"
+	"github.com/overthinkinglabs/dsw/models"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -30,7 +30,7 @@ func (configuration *Configuration) GetConfigPath() (string, error) {
 	}
 
 	configDir := filepath.Join(homeDir, models.CONFIGURATION_FOLDER)
-	if err := os.MkdirAll(configDir, 0700); err != nil {
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		return "", fmt.Errorf("failed to create configuration directory: %w", err)
 	}
 
@@ -91,7 +91,7 @@ func (configuration *Configuration) Save() error {
 	}
 
 	tempPath := configPath + ".tmp"
-	if err := os.WriteFile(tempPath, yamlData, 0600); err != nil {
+	if err := os.WriteFile(tempPath, yamlData, 0o600); err != nil {
 		return fmt.Errorf("failed to write configuration: %w", err)
 	}
 

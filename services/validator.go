@@ -33,7 +33,7 @@ func (validator *Validator) ValidateCommand(commandPath string) error {
 	}
 
 	filePermissions := fileInfo.Mode()
-	if filePermissions&0111 == 0 {
+	if filePermissions&0o111 == 0 {
 		return fmt.Errorf("command is not executable: %s", resolvedPath)
 	}
 

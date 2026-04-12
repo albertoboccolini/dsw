@@ -9,7 +9,7 @@ This project requires **Go version 1.25.4 or higher**. Make sure you have a comp
 1. **Installation**: Installs dsw in the system
 
     ```bash
-    go install github.com/albertoboccolini/dsw@latest
+    go install github.com/overthinkinglabs/dsw@latest
     ```
 
 2. Example usage:

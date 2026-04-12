@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/albertoboccolini/dsw/models"
-	"github.com/albertoboccolini/dsw/services"
+	"github.com/overthinkinglabs/dsw/models"
+	"github.com/overthinkinglabs/dsw/services"
 )
 
 func printUsage() {
