@@ -8,8 +8,10 @@ import (
 	"strings"
 )
 
-const bootDisableMessage = "Boot disabled successfully"
-const bootEnableMessage = "Boot enabled successfully"
+const (
+	bootDisableMessage = "Boot disabled successfully"
+	bootEnableMessage  = "Boot enabled successfully"
+)
 
 const serviceTemplate = `[Unit]
 Description=DSW Service
@@ -92,11 +94,11 @@ func (bootManager *BootManager) EnableBootService(port int) error {
 	)
 
 	serviceDir := filepath.Dir(bootManager.getServicePath())
-	if err := os.MkdirAll(serviceDir, 0755); err != nil {
+	if err := os.MkdirAll(serviceDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create systemd directory: %w", err)
 	}
 
-	if err := os.WriteFile(bootManager.getServicePath(), []byte(serviceContent), 0644); err != nil {
+	if err := os.WriteFile(bootManager.getServicePath(), []byte(serviceContent), 0o644); err != nil {
 		return fmt.Errorf("failed to write service file: %w", err)
 	}
 

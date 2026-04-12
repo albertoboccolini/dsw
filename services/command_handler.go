@@ -102,7 +102,6 @@ func (commandHandler *CommandHandler) Create() {
 	createFlags := flag.NewFlagSet("create", flag.ExitOnError)
 	configFile := createFlags.String("f", "", "YAML file with actions to add")
 	err := createFlags.Parse(os.Args[2:])
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to parse flags: %v\n", err)
 		os.Exit(1)
@@ -180,6 +179,12 @@ func (commandHandler *CommandHandler) Serve() {
 		}
 
 		return
+	}
+
+	pidPath, err := commandHandler.configuration.GetPIDPath()
+	if err == nil {
+		pidStr := fmt.Sprintf("%d", os.Getpid())
+		_ = os.WriteFile(pidPath, []byte(pidStr), 0o600)
 	}
 
 	if len(commandHandler.configuration.Actions) == 0 {

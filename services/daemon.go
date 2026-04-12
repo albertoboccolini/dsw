@@ -28,7 +28,7 @@ func (daemon *Daemon) getLogPath() (string, error) {
 	}
 
 	logDir := filepath.Join(home, models.CONFIGURATION_FOLDER)
-	if err := os.MkdirAll(logDir, 0700); err != nil {
+	if err := os.MkdirAll(logDir, 0o700); err != nil {
 		return "", fmt.Errorf("failed to create log directory: %w", err)
 	}
 
@@ -55,7 +55,7 @@ func (daemon *Daemon) StartDaemon(port int) error {
 		return fmt.Errorf("failed to get log path: %w", err)
 	}
 
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
@@ -79,7 +79,7 @@ func (daemon *Daemon) StartDaemon(port int) error {
 	}
 
 	pid := command.Process.Pid
-	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(pid)), 0600); err != nil {
+	if err := os.WriteFile(pidPath, []byte(strconv.Itoa(pid)), 0o600); err != nil {
 		if err := command.Process.Kill(); err != nil {
 			return fmt.Errorf("failed to kill process after PID file write failure: %v", err)
 		}
