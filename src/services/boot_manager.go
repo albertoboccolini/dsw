@@ -86,7 +86,8 @@ func (bootManager *BootManager) EnableBootService(port int) error {
 		pathEnv = "/usr/local/bin:/usr/bin:/bin"
 	}
 
-	serviceContent := fmt.Sprintf(serviceTemplate,
+	serviceContent := fmt.Sprintf(
+		serviceTemplate,
 		execPath,
 		port,
 		pathEnv,

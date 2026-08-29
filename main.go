@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/overthinkinglabs/dsw/models"
-	"github.com/overthinkinglabs/dsw/services"
+	"github.com/overthinkinglabs/dsw/src/models"
+	"github.com/overthinkinglabs/dsw/src/services"
 )
 
 func printUsage() {

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/overthinkinglabs/dsw/models"
+	"github.com/overthinkinglabs/dsw/src/models"
 )
 
 type Daemon struct {

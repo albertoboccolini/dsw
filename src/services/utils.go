@@ -1,5 +1,7 @@
 package services
 
+import "strings"
+
 import "os"
 
 type Utils struct{}
@@ -18,14 +20,14 @@ func (utils *Utils) ExtractPortFromCmdline(pid string) string {
 	for i := 0; i < len(args)-1; i++ {
 		if args[i] == '-' && args[i+1] == 'p' && i+2 < len(args) {
 			i += 3
-			port := ""
+			var port strings.Builder
 			for i < len(args) && args[i] != 0 {
-				port += string(args[i])
+				port.WriteString(string(args[i]))
 				i++
 			}
 
-			if port != "" {
-				return port
+			if port.String() != "" {
+				return port.String()
 			}
 		}
 	}
