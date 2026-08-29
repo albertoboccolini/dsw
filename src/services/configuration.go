@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/overthinkinglabs/dsw/models"
+	"github.com/overthinkinglabs/dsw/src/models"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -81,7 +81,7 @@ func (configuration *Configuration) Save() error {
 		return err
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"actions": configuration.Actions,
 	}
 

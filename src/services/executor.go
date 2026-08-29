@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/overthinkinglabs/dsw/models"
+	"github.com/overthinkinglabs/dsw/src/models"
 )
 
 const commandTimeout = 60 * time.Second

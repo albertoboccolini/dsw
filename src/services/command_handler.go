@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/overthinkinglabs/dsw/models"
+	"github.com/overthinkinglabs/dsw/src/models"
 	"github.com/spf13/viper"
 )
 
